@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.paths.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./dist",
+    "target": "es2022",
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+  }
+}

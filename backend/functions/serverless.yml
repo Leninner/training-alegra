@@ -1,0 +1,450 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: leninner
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: backend
+
+plugins:
+  - serverless-openapi-documenter
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: dev
+  httpApi:
+    authorizers:
+      sharedAuthorizer:
+        type: request
+        functionName: authorizerFunc
+        identitySource: $request.header.Authorization
+
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:PutObject
+      Resource: arn:aws:s3:::lenin-training-leninner-logs-bucket-test/*
+
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - !GetAtt UsersDynamoDBTable.Arn
+        - !Sub "${UsersDynamoDBTable.Arn}/index/EmailIndex"
+        - !GetAtt FoundationsDynamoDBTable.Arn
+        - !Sub "${FoundationsDynamoDBTable.Arn}/index/NameIndex"
+        - !GetAtt PetsDynamoDBTable.Arn
+        - !Sub "${PetsDynamoDBTable.Arn}/index/FoundationIndex"
+
+    - Effect: Allow
+      Action:
+        - sns:Publish
+      Resource: !Ref PetsAdoptedTopic
+
+build:
+  esbuild:
+    external:
+      - mock-aws-s3
+      - nock
+    loader:
+      ".html": "text"
+
+custom:
+  documentation:
+    version: "1.0.0"
+    title: "Leninner Training PETS API"
+    description: "This is the API for the Leninner Training PETS project"
+    models:
+      - name: "CreateFoundationRequest"
+        description: "Schema for creating a foundation"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              description: "Name of the foundation"
+
+          required:
+            - name
+
+      - name: "ErrorResponse"
+        description: "This is an error response"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            errorCode:
+              type: string
+              description: "Error code"
+            errorMessage:
+              type: string
+              description: "Error message"
+          required:
+            - errorCode
+            - errorMessage
+
+      - name: "CreatePetRequest"
+        description: "Schema for creating a pet"
+        contentType: "application/json"
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              description: "Name of the pet"
+            type:
+              type: string
+              description: "Type of pet (e.g., dog, cat)"
+            foundationId:
+              type: string
+              description: "ID of the foundation"
+            breed:
+              type: string
+              description: "Breed of the pet"
+          required:
+            - name
+            - type
+            - foundationId
+            - breed
+      - name: Adopter
+        description: Schema for the adopter
+        contentType: application/json
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the user
+            lastName:
+              type: string
+              description: Last name of the user
+            dni:
+              type: string
+              description: DNI of the user
+
+          required:
+            - name
+            - lastName
+            - dni
+
+      - name: AdoptPetRequest
+        description: Schema for adopting a pet
+        contentType: application/json
+        schema:
+          type: object
+          properties:
+            petId:
+              type: string
+              description: ID of the pet
+            adopter:
+              type: object
+              description: User adopting the pet
+          required:
+            - petId
+            - adopter
+
+layers:
+  shared:
+    path: ../layers/
+    compatibleRuntimes:
+      - nodejs20.x
+
+package:
+  individually: true
+
+functions:
+  create-foundation:
+    handler: src/foundations/create-foundation.handler
+    events:
+      - httpApi:
+          path: /v1/foundations
+          method: post
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Create a foundation"
+            description: "Create a foundation"
+            requestModels:
+              "application/json": "CreateFoundationRequest"
+            requestParameters:
+              paths:
+                name: true
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                  "application/json": "CreateFoundationRequest"
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      FOUNDATIONS_TABLE_NAME: foundations-table-${sls:stage}
+
+  update-pet:
+    handler: src/pets/update-pet.handler
+    events:
+      - httpApi:
+          path: /v1/pets/{id}
+          method: put
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Update a pet"
+            description: "Update a pet"
+            pathParams:
+              - name: "id"
+                description: "ID of the pet"
+                required: true
+                schema:
+                  type: string
+
+            requestModels:
+              "application/json": "CreatePetRequest"
+
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                  "application/json": "CreatePetRequest"
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      PETS_TABLE_NAME: pets-table-${sls:stage}
+
+  create-pet:
+    handler: src/pets/create-pet.handler
+    events:
+      - httpApi:
+          path: /v1/pets
+          method: post
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Create a pet"
+            description: "Create a pet"
+            requestModels:
+              "application/json": "CreatePetRequest"
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                  "application/json": "CreatePetRequest"
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      PETS_TABLE_NAME: pets-table-${sls:stage}
+      FOUNDATIONS_TABLE_NAME: foundations-table-${sls:stage}
+
+  delete-pet:
+    handler: src/pets/delete-pet.handler
+    events:
+      - httpApi:
+          path: /v1/pets/{id}
+          method: delete
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Delete a pet"
+            description: "Delete a pet"
+            pathParams:
+              - name: "id"
+                description: "ID of the pet"
+                required: true
+                schema:
+                  type: string
+
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                "application/json": "{ \"message\": \"Pet deleted\ }"
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      PETS_TABLE_NAME: pets-table-${sls:stage}
+
+  get-pets:
+    handler: src/pets/get-pets.handler
+    events:
+      - httpApi:
+          path: /v1/pets
+          method: get
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Get pets"
+            description: "Get pets"
+            queryParameters:
+              - name: "foundationId"
+                description: "ID of the foundation"
+                required: false
+              - name: "type"
+                description: "Type of pet"
+                required: false
+              - name: "breed"
+                description: "Breed of the pet"
+                required: false
+
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                "application/json": '{ "message": "Pets retrieved" }'
+
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      FOUNDATIONS_TABLE_NAME: foundations-table-${sls:stage}
+      PETS_TABLE_NAME: pets-table-${sls:stage}
+
+  adopt-pets:
+    handler: src/pets/adopt-pet.handler
+    events:
+      - httpApi:
+          path: /v1/pets/adopt
+          method: post
+          authorizer:
+            name: sharedAuthorizer
+          documentation:
+            summary: "Adopt a pet"
+            description: "Adopt a pet"
+            requestModels:
+              "application/json": "AdoptPetRequest"
+            methodResponses:
+              - statusCode: 200
+                responseModels:
+                  "application/json": "AdoptPetRequest"
+              - statusCode: 400
+                responseModels:
+                  "application/json": "ErrorResponse"
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      PETS_TABLE_NAME: pets-table-${sls:stage}
+      ADOPT_PET_TOPIC_ARN: !Ref PetsAdoptedTopic
+
+  create-user:
+    handler: src/users/register-user.handler
+    events:
+      - httpApi:
+          path: /v1/users
+          method: post
+    layers:
+      - !Ref SharedLambdaLayer
+    environment:
+      USERS_TABLE: users-table-${sls:stage}
+
+  authorizerFunc:
+    handler: src/users/authorizer.handler
+
+resources:
+  Resources:
+    UsersDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: users-table-${sls:stage}
+        BillingMode: PAY_PER_REQUEST
+
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+
+          - AttributeName: email
+            AttributeType: S
+
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+          - AttributeName: email
+            KeyType: RANGE
+
+        GlobalSecondaryIndexes:
+          - IndexName: EmailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+
+            Projection:
+              ProjectionType: ALL
+
+    FoundationsDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: foundations-table-${sls:stage}
+        BillingMode: PAY_PER_REQUEST
+
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+
+          - AttributeName: createdAt
+            AttributeType: S
+
+          - AttributeName: name
+            AttributeType: S
+
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+          - AttributeName: createdAt
+            KeyType: RANGE
+
+        GlobalSecondaryIndexes:
+          - IndexName: NameIndex
+            KeySchema:
+              - AttributeName: name
+                KeyType: HASH
+
+            Projection:
+              ProjectionType: ALL
+
+    PetsDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: pets-table-${sls:stage}
+        BillingMode: PAY_PER_REQUEST
+
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+
+          - AttributeName: foundationId
+            AttributeType: S
+
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+          - AttributeName: foundationId
+            KeyType: RANGE
+
+        GlobalSecondaryIndexes:
+          - IndexName: FoundationIndex
+            KeySchema:
+              - AttributeName: foundationId
+                KeyType: HASH
+
+            Projection:
+              ProjectionType: ALL
+
+    PetsAdoptedTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: PetsAdoptedTopic
+        TopicName: pets-adopted-topic-${sls:stage}

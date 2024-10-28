@@ -1,0 +1,329 @@
+{
+  "openapi": "3.0.3",
+  "components": {
+    "schemas": {
+      "CreateFoundationRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the foundation"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": [
+          "errorCode",
+          "errorMessage"
+        ]
+      },
+      "CreatePetRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the pet"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of pet (e.g., dog, cat)"
+          },
+          "foundationId": {
+            "type": "string",
+            "description": "ID of the foundation"
+          },
+          "breed": {
+            "type": "string",
+            "description": "Breed of the pet"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "foundationId",
+          "breed"
+        ]
+      },
+      "Adopter": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the user"
+          },
+          "lastName": {
+            "type": "string",
+            "description": "Last name of the user"
+          },
+          "dni": {
+            "type": "string",
+            "description": "DNI of the user"
+          }
+        },
+        "required": [
+          "name",
+          "lastName",
+          "dni"
+        ]
+      },
+      "AdoptPetRequest": {
+        "type": "object",
+        "properties": {
+          "petId": {
+            "type": "string",
+            "description": "ID of the pet"
+          },
+          "adopter": {
+            "type": "object",
+            "description": "User adopting the pet"
+          }
+        },
+        "required": [
+          "petId",
+          "adopter"
+        ]
+      },
+      "id": {
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "title": "Leninner Training PETS API",
+    "description": "This is the API for the Leninner Training PETS project",
+    "version": "1.0.0",
+    "termsOfService": "https://google.com"
+  },
+  "paths": {
+    "/v1/foundations": {
+      "post": {
+        "summary": "Create a foundation",
+        "description": "Create a foundation",
+        "operationId": "foundation",
+        "parameters": [],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFoundationRequest"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      }
+    },
+    "/v1/pets/{id}": {
+      "put": {
+        "summary": "Update a pet",
+        "description": "Update a pet",
+        "operationId": "pet",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the pet",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/id"
+            }
+          }
+        ],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePetRequest"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a pet",
+        "description": "Delete a pet",
+        "operationId": "pet-bb9d1b8d-68e2-481d-bb8f-9cd816650725",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID of the pet",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/id"
+            }
+          }
+        ],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      }
+    },
+    "/v1/pets": {
+      "post": {
+        "summary": "Create a pet",
+        "description": "Create a pet",
+        "operationId": "pet-99db6c47-d996-440e-9854-33dfd6d70d69",
+        "parameters": [],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePetRequest"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      },
+      "get": {
+        "summary": "Get pets",
+        "description": "Get pets",
+        "operationId": "pets",
+        "parameters": [],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      }
+    },
+    "/v1/pets/adopt": {
+      "post": {
+        "summary": "Adopt a pet",
+        "description": "Adopt a pet",
+        "operationId": "pets-904cbdc9-7a86-4402-bec1-731052762fb2",
+        "parameters": [],
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoptPetRequest"
+                }
+              }
+            },
+            "headers": {}
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {}
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://example.com:{port}/",
+      "description": "The server",
+      "variables": {
+        "port": {
+          "enum": [
+            "4000",
+            "3000"
+          ],
+          "default": "3000",
+          "description": "The port the server operates on"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+org: leninner
+
+service: layers-demo
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: ap-northeast-1
