@@ -11,7 +11,7 @@ import {
   UpdateCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 import { PublishCommand, SNSClient } from "@aws-sdk/client-sns";
 import { writeLogToS3 } from "../../../layers/logging";
@@ -23,7 +23,9 @@ const databaseClient = new DynamoDBClient({});
 const documentClient = DynamoDBDocumentClient.from(databaseClient);
 const snsClient = new SNSClient({});
 
-const adoptPetHandler = async (event: APIGatewayProxyEventV2): Promise<any> => {
+const adoptPetHandler = async (
+  event: APIGatewayProxyEventV2,
+): Promise<APIGatewayProxyResultV2> => {
   await writeLogToS3(event);
 
   const data = event.body as unknown as AdoptPetDto;

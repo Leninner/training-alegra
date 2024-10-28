@@ -10,7 +10,7 @@ import {
   DynamoDBDocumentClient,
 } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { writeLogToS3 } from "../../../layers/logging";
 
 const PETS_TABLE_NAME = `${process.env.PETS_TABLE_NAME}`;
@@ -19,7 +19,9 @@ const FOUNDATIONS_TABLE_NAME = `${process.env.FOUNDATIONS_TABLE_NAME}`;
 const databaseClient = new DynamoDBClient({});
 const documentClient = DynamoDBDocumentClient.from(databaseClient);
 
-const getPetsHandler = async (event: APIGatewayProxyEventV2): Promise<any> => {
+const getPetsHandler = async (
+  event: APIGatewayProxyEventV2,
+): Promise<APIGatewayProxyResultV2> => {
   await writeLogToS3(event);
 
   const queryParams = event.queryStringParameters;

@@ -3,19 +3,22 @@ import {
   APIGatewayRequestAuthorizerEventV2,
   APIGatewayAuthorizerResult,
 } from "aws-lambda";
+import jwt from "jsonwebtoken";
 
-// Definimos los posibles efectos de la política
+const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
+
 enum StatementEffect {
   ALLOW = "Allow",
   DENY = "Deny",
 }
 
-// Lógica para validar el token de autorización
 const validateToken = (token: string): boolean => {
-  // Lógica personalizada para validar el token, por ejemplo, una verificación JWT.
-  // Aquí simplemente validamos un token estático para el ejemplo.
-  // En producción, verifica la firma, la expiración, etc.
-  return true;
+  try {
+    jwt.verify(token, JWT_SECRET);
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
 
 const lambdaAuthorizer = async (

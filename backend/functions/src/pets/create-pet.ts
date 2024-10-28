@@ -15,7 +15,7 @@ import {
   DynamoDBDocumentClient,
 } from "@aws-sdk/lib-dynamodb";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { APIGatewayProxyEventV2 } from "aws-lambda";
+import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import httpJsonBodyParser from "@middy/http-json-body-parser";
 import { writeLogToS3 } from "../../../layers/logging";
 
@@ -27,7 +27,7 @@ const documentClient = DynamoDBDocumentClient.from(databaseClient);
 
 const createPetHandler = async (
   event: APIGatewayProxyEventV2,
-): Promise<any> => {
+): Promise<APIGatewayProxyResultV2> => {
   await writeLogToS3(event);
 
   const petId = ulid();

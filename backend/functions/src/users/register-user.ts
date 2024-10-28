@@ -18,7 +18,7 @@ import {
 } from "../../../layers/interfaces/dto";
 
 const USER_TABLE_NAME = `${process.env.USERS_TABLE}`;
-const JWT_SECRET = process.env.JWT_SECRET || "default-secret"; // Reemplazar en producción
+const JWT_SECRET = process.env.JWT_SECRET || "default-secret";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1h";
 
 const databaseClient = new DynamoDBClient({});
