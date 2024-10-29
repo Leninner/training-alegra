@@ -21,26 +21,12 @@ export class SharedStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: StackBasicProps) {
     super(scope, id, getCdkPropsFromCustomProps(props));
 
-    this.lambdaAuthorizer = this.createLambdaAuthorizer(props);
     this.apiGateway = this.createApiGateway(
       props,
       this.createHttpAuthorizer(this.lambdaAuthorizer, props),
     );
-    // this.domainName = this.createDomainName();
-    // this.attachDomainNameToApiGateway(this.domainName, this.apiGateway);
-    // const httpAuthorizer = this.createHttpAuthorizer(
-    //   this.lambdaAuthorizer,
-    //   props,
-    // );
-    this.attachAuthorizerToApiGateway(
-      this.lambdaAuthorizer,
-      this.apiGateway,
-      props,
-    );
-
     this.createLogsBucket(props);
     this.createRootResource(this.apiGateway);
-    // this.exportCustomName(this.domainName);
   }
 
   private createApiGateway(
@@ -151,34 +137,6 @@ export class SharedStack extends cdk.Stack {
       authorizerPayloadFormatVersion: "2.0",
       authorizerResultTtlInSeconds: 300,
       identitySource: ["$request.header.Authorization"],
-    });
-  }
-
-  private createLambdaAuthorizer(
-    props?: StackBasicProps,
-  ): lambda.NodejsFunction {
-    return new lambda.NodejsFunction(this, "LambdaAuthorizer", {
-      handler: "index.handler",
-      functionName: getResourceNameWithPrefix(`authorizer-${props?.env}`),
-      code: Code.fromInline(`
-        exports.handler = async function(event) {
-          // Lógica de autorización (validar token, etc.)
-          // Ejemplo simple que permite todas las solicitudes
-          return {
-            principalId: 'user',
-            policyDocument: {
-              Version: '2012-10-17',
-              Statement: [
-                {
-                  Action: 'execute-api:Invoke',
-                  Effect: 'Allow',
-                  Resource: event.methodArn
-                }
-              ]
-            }
-          }
-        }
-      `),
     });
   }
 }
